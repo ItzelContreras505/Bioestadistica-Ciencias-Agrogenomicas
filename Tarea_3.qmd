@@ -1,0 +1,549 @@
+---
+title: "Tarea 3. Algunos Ejercicios"
+format: html
+editor: visual
+---
+
+```{r}
+#| code-fold: true
+#| message: false
+#| warning: false
+
+library(tidyverse)
+```
+
+```{r}
+#| code-fold: true
+
+calcular_bayes_2 <- function(prior, likelihood_pos, likelihood_neg) {
+  evidence <- likelihood_pos * prior + likelihood_neg * (1 - prior)
+  posterior <- (likelihood_pos * prior) / evidence
+  return(list(
+    evidence = evidence,
+    posterior = posterior,
+    improvement = posterior - prior
+  ))
+}
+```
+
+# Ejercicio 1
+
+Items in your inventory are produced at three different plants: 50% from plant A1, 30% from plant A2 and 20% from plant A3. You are aware that your plants produce at different levels of quality: A1 produces 5 percent defectives, A2 produces 7 percent defectives and A3 yields 8 percent defectives. You randomly select an item from your inventory and it turns out to be defective. Which plant is the item most likely to have come from?
+
+## Datos
+
+-   P(A1) = 0.50
+-   P(A2) = 0.30\
+-   P(A3) = 0.20
+-   P(D\|A1) = 0.05
+-   P(D\|A2) = 0.07
+-   P(D\|A3) = 0.08
+
+```{r}
+#| code-fold: true
+
+prob_A1 <- 0.50
+prob_A2 <- 0.30
+prob_A3 <- 0.20
+prob_D_A1 <- 0.05
+prob_D_A2 <- 0.07
+prob_D_A3 <- 0.08
+
+# Probabilidad para cada planta dado que es defectuoso
+posterior_prob_A1 <- (prob_D_A1 * prob_A1) / (prob_D_A1 * prob_A1 + prob_D_A2 * prob_A2 + prob_D_A3 * prob_A3)
+posterior_prob_A2 <- (prob_D_A2 * prob_A2) / (prob_D_A1 * prob_A1 + prob_D_A2 * prob_A2 + prob_D_A3 * prob_A3)
+posterior_prob_A3 <- (prob_D_A3 * prob_A3) / (prob_D_A1 * prob_A1 + prob_D_A2 * prob_A2 + prob_D_A3 * prob_A3)
+
+cat("La probabilidad de que venga de la planta A1 dado que es defectuoso es:", posterior_prob_A1, "\n")
+cat("La probabilidad de que venga de la planta A2 dado que es defectuoso es:", posterior_prob_A2, "\n")
+cat("La probabilidad de que venga de la planta A3 dado que es defectuoso es:", posterior_prob_A3, "\n\n")
+
+# Determinar cuál es la más probable
+cat("El artículo defectuoso es MÁS probable que venga de la planta:")
+if (posterior_prob_A1 > posterior_prob_A2 & posterior_prob_A1 > posterior_prob_A3) {
+  cat(" A1")
+} else if (posterior_prob_A2 > posterior_prob_A1 & posterior_prob_A2 > posterior_prob_A3) {
+  cat(" A2")
+} else {
+  cat(" A3")
+}
+```
+
+# Ejercicio 2
+
+A breathalyser test is used by police in an area to determine whether a driver has an excess of alcohol in their blood. The device is not totally reliable: 8 % of drivers who have not consumed an excess of alcohol give a reading from the breathalyser as being above the legal limit, while 10 % of drivers who are above the legal limit will give a reading below that level. Suppose that in fact 14 % of drivers are above the legal alcohol limit, and the police stop a driver at random. Give answers to the following to four decimal places.
+
+## Datos
+
+-   P(Over) = 0.14 (conductores sobre el límite)
+-   P(Under) = 0.86 (conductores bajo el límite)
+-   P(Test+ \| Under) = 0.08 (falsos positivos)
+-   P(Test- \| Over) = 0.10 (falsos negativos)
+
+```{r}
+#| code-fold: true
+
+# Probabilidades previas
+prob_Over <- 0.14
+prob_Under <- 0.86
+
+# Probabilidades condicionales
+prob_TestPlus_Under <- 0.08  # Falso positivo
+prob_TestMinus_Over <- 0.10  # Falso negativo
+
+# Calculamos las probabilidades complementarias
+prob_TestMinus_Under <- 1 - prob_TestPlus_Under  # 0.92
+prob_TestPlus_Over <- 1 - prob_TestMinus_Over    # 0.90
+
+# Parte a) Probabilidad de clasificación incorrecta como sobre el límite (falsos positivos)
+part_a <- prob_TestPlus_Under * prob_Under
+cat("Part a) Probability incorrectly classified as over limit:", round(part_a, 4), "\n")
+# Parte b) Probabilidad de clasificación correcta como sobre el límite (verdaderos positivos)
+part_b <- prob_TestPlus_Over * prob_Over
+cat("Part b) Probability correctly classified as over limit:", round(part_b, 4), "\n")
+
+# Parte c) Probabilidad de que el test dé reading sobre el límite
+part_c <- (prob_TestPlus_Over * prob_Over) + (prob_TestPlus_Under * prob_Under)
+cat("Part c) Probability test reading is over limit:", round(part_c, 4), "\n")
+
+# Parte d) Probabilidad de que esté bajo el límite, dado que el test dice bajo el límite
+# P(Under | Test-) = [P(Test- | Under) * P(Under)] / P(Test-)
+prob_TestMinus <- (prob_TestMinus_Under * prob_Under) + (prob_TestMinus_Over * prob_Over)
+part_d <- (prob_TestMinus_Under * prob_Under) / prob_TestMinus
+cat("Part d) Probability under limit given test below limit:", round(part_d, 4), "\n")
+```
+
+# Ejercicio 3
+
+Factories A and B produce computers. Factory A produces 4 times as many computers as factory B. The probability that an item produced by factory A is defective is 0.019 and the probability that an item produced by factory B is defective is 0.048. A computer is selected at random and it is found to be defective. What is the probability it came from factory A?
+
+## Datos
+
+-   $P(A)=4/3$
+-   $P(B)=1/3$
+-   $P(D|A)=0.019$
+-   $P(D|B)=0.048$
+
+
+```{r}
+#| code-fold: true
+
+prob_A <- 4/3
+prob_B <- 1/3
+prob_D_A <- 0.019
+prob_D_B <- 0.048
+
+posterior_prob_A <- (prob_D_A* prob_A)/(prob_D_A* prob_A+prob_D_B* prob_B)
+
+cat("La probabilidad de que se haya producido en la fábrica A dado que fue defectuoso es",  posterior_prob_A)
+
+```
+
+```{r}
+ejercicio_3 <- calcular_bayes_2(prob_A, prob_D_A, prob_D_B)
+
+cat("La probabilidad de que se haya producido en la fábrica A dado que fue defectuoso es",  ejercicio_3$posterior)
+```
+
+# Ejercicio 4
+ It is estimated that approximately 8.29% Americans are afflicted with diabetes. Suppose that a certain diagnostic evaluation for diabetes will correctly diagnose 96.5% of all adults over 40
+ with diabetes as having the disease and incorrectly diagnoses 1.5% of all adults over 40
+ without diabetes as having the disease.
+
+
+## Datos
+- P(Diabetes) = 0.0829
+- P(NoDiabetes) = 0.9171
+- P(Positivo|Diabetes) = 0.965
+- P(Positivo|NoDiabetes) = 0.015
+
+```{r}
+#| code-fold: true
+
+# Probabilidades previas
+P_D <- 0.0829
+P_NoD <- 0.9171
+
+# Probabilidades condicionales
+P_Pos_D <- 0.965    # Verdaderos positivos
+P_Pos_NoD <- 0.015  # Falsos positivos
+
+# a) Falsos positivos: No tiene diabetes pero diagnóstico positivo
+parte_a <- P_Pos_NoD * P_NoD
+
+# b) Diagnosticado como negativo
+# Primero calculamos P(Negativo|Diabetes) y P(Negativo|NoDiabetes)
+P_Neg_D <- 1 - P_Pos_D      # Falsos negativos
+P_Neg_NoD <- 1 - P_Pos_NoD  # Verdaderos negativos
+
+# Probabilidad total de diagnóstico negativo
+parte_b <- (P_Neg_D * P_D) + (P_Neg_NoD * P_NoD)
+
+# c) Falsos negativos: Tiene diabetes dado que diagnóstico negativo
+parte_c <- (P_Neg_D * P_D) / parte_b
+
+cat(sprintf("a) False positive probability: %.7f\n", parte_a))
+cat(sprintf("b) Diagnosed as not having diabetes: %.4f\n", parte_b))
+cat(sprintf("c) False negative probability: %.4f\n", parte_c))
+```
+
+ 
+# Ejercicio 5
+ In a random sample of 1,000 people, it is found that 8.2% have a liver ailment. Of those who have a liver ailment, 9% are heavy drinkers, 55% are moderate drinkers, and 36% are nondrinkers. Of those who do not have a liver ailment, 11% are heavy drinkers, 47% are moderate drinkers, and 42% are nondrinkers.
+
+If a person is chosen at random, and he or she is a heavy drinker, what is the empirical probability of that person having a liver ailment?
+
+## Datos
+- P(Liver) = 0.082
+- P(NoLiver) = 0.918  
+- P(Heavy|Liver) = 0.09
+- P(Heavy|NoLiver) = 0.11
+
+```{r}
+#| code-fold: true
+
+# Cálculo directo con Teorema de Bayes
+resultado <- (0.09 * 0.082) / ((0.09 * 0.082) + (0.11 * 0.918))
+
+cat("Empirical probability =", round(resultado, 4))
+
+```
+
+
+# Ejercicio 6 
+A biomedical research company produces 49%
+ of its insulin at a plant in Kansas City, and the remainder is produced at a plant in Jefferson City. Quality control has shown that 1.3%
+ of the insulin produced at the plant in Kansas City is defective, while 1%
+ of the insulin produced at the plant in Jefferson City is defective. What is the probability that a randomly chosen unit of insulin came from the plant in Jefferson City given that it is defective?
+ 
+
+```{r}
+#| code-fold: true
+
+# prior probabilidad Jefferson City
+prob_JC <- 0.51
+# likelihood_defecto_JC
+prob_def_JC <- 0.01
+# likelihood_defecto_KC
+prob_def_KC <- 0.013
+
+# Función para calcular probabilidad bayesiana
+calcular_bayes <- function(prior, likelihood1, likelihood2) {
+  # Probabilidad total del evento (defectuoso)
+  prob_total <- (likelihood1 * prior) + (likelihood2 * (1 - prior))
+  
+  # Probabilidad posterior
+  posterior <- (likelihood1 * prior) / prob_total
+  
+  return(list(posterior = posterior,
+              prob_total = prob_total))
+}
+
+# Calcular probabilidad
+ejercicio_insulina <- calcular_bayes(prob_JC, prob_def_JC, prob_def_KC)
+
+cat("La probabilidad de que venga de Jefferson City dado que es defectuoso es:", 
+    ejercicio_insulina$posterior, "\n")
+cat("Que equivale a la fracción: 510/1147")
+```
+# Ejercicio 7
+Three airlines serve a small town in Ohio. Airline A has 55% of all scheduled flights, airline B has 27% and airline C has the remaining 18%. Their on-time rates are 82%, 66%, and 44%, respectively. A flight just left on-time. What is the probability that it was a flight of airline A?
+
+## Datos
+- Airline A: 55% de vuelos, 82% on-time
+- Airline B: 27% de vuelos, 66% on-time  
+- Airline C: 18% de vuelos, 44% on-time
+
+```{r}
+#| code-fold: true
+
+# prior probabilidad Airline A
+prob_A <- 0.55
+# likelihood_ontime_A
+prob_ontime_A <- 0.82
+# likelihood_ontime_B
+prob_ontime_B <- 0.66
+# likelihood_ontime_C
+prob_ontime_C <- 0.44
+
+# Función para calcular probabilidad bayesiana con tres opciones
+calcular_bayes_3 <- function(prior_A, likelihood_A, likelihood_B, likelihood_C) {
+  # Probabilidades previas de las otras aerolíneas
+  prob_B <- 0.27
+  prob_C <- 0.18
+  
+  # Probabilidad total de vuelo a tiempo
+  prob_total_ontime <- (likelihood_A * prior_A) + 
+                       (likelihood_B * prob_B) + 
+                       (likelihood_C * prob_C)
+  
+  # Probabilidad posterior (Airline A dado que salió a tiempo)
+  posterior_A <- (likelihood_A * prior_A) / prob_total_ontime
+  
+  return(list(posterior = posterior_A,
+              prob_total = prob_total_ontime))
+}
+
+# Calcular probabilidad
+ejercicio_aerolineas <- calcular_bayes_3(prob_A, prob_ontime_A, prob_ontime_B, prob_ontime_C)
+
+cat("La probabilidad de que sea Airline A dado que salió a tiempo es:", 
+    round(ejercicio_aerolineas$posterior, 4))
+```
+# Ejercicio 8 
+Bad gums may mean a bad heart. Researchers discovered that 75% of people who have suffered a heart attack had periodontal disease, an inflammation of the gums. Only 31% of healthy people have this disease. Suppose that in a certain community heart attacks are quite rare, occurring with only 15% probability.
+
+A. If someone has periodontal disease, what is the probability that he or she will have a heart attack?
+
+
+## Datos
+- P(Enfermedad | Ataque) = 0.75
+- P(Enfermedad | Saludable) = 0.31
+
+```{r}
+#| code-fold: true
+
+# Datos comunes
+prob_enfermedad_ataque <- 0.75
+prob_enfermedad_sano <- 0.31
+
+# Parte A (15% ataques)
+prob_ataque_A <- 0.15
+prob_A <- (prob_enfermedad_ataque * prob_ataque_A) / 
+          ((prob_enfermedad_ataque * prob_ataque_A) + (prob_enfermedad_sano * (1 - prob_ataque_A)))
+
+# Parte B (43% ataques)  
+prob_ataque_B <- 0.43
+prob_B <- (prob_enfermedad_ataque * prob_ataque_B) /
+          ((prob_enfermedad_ataque * prob_ataque_B) + (prob_enfermedad_sano * (1 - prob_ataque_B)))
+
+cat("A. Probability =", round(prob_A, 4), "\n")
+cat("B. Probability =", round(prob_B, 4))
+```
+
+
+# Ejercicio 9
+
+Transplant operations have become routine. One common transplant operation is for kidneys. The most dangerous aspect of the procedure is the possibility that the body may reject the new organ. There are several new drugs available for such circumstances and the earlier the drug is administered, the higher the probability of averting rejection. The New England Journal of Medicine recently reported the development of a new urine test to detect early warning signs that the body is rejecting a transplanted kidney. However, like most other tests, the new test is not perfect. In fact, 20% of negative tests and 10% of positive tests prove to be incorrect. Physicians know that in about 30% of kidney transplants the body tries to reject the organ. If the new test has a positive result (indicating early warning of rejection), what is the probability that the body is attempting to reject the kidney?
+
+```{r}
+#| code-fold: true
+
+# prior probabilidad rechazo
+prob_rechazo <- 0.3
+# likelihood_pos
+prob_pos_rechazo <- 0.8
+# likelihood_neg
+prob_pos_norechazo <- 0.1
+
+
+ejercicio_9 <- calcular_bayes_2(prob_rechazo, prob_pos_rechazo, prob_pos_norechazo)
+
+cat("La probalidad de que se rechace dado que la prueba fue positiva es:",  ejercicio_9$posterior)
+```
+# Ejercicio 10 
+ Independent events must be mutually exclusive.
+
+A. False
+B. True
+
+```{r}
+#| code-fold: true
+
+# Análisis de la afirmación
+# Eventos independientes: P(A∩B) = P(A) × P(B)
+# Eventos mutuamente excluyentes: P(A∩B) = 0
+# Solo serían iguales si P(A) = 0 o P(B) = 0 (casos triviales)
+
+cat("RESPUESTA CORRECTA: A. False\n")
+
+```
+# Ejercicio 11
+
+ All that is left in a packet of candy are 9 reds, 3 greens, and 3 blues.
+ # Ejercicio: Probabilidad con caramelos
+
+## Datos
+- 9 rojos, 3 verdes, 3 azules
+- Total de caramelos: 15
+
+```{r}
+#| code-fold: true
+
+# Parte (a)
+cat("(a) Probability:", (3/15)*(9/15), "=", (3*9), "/", (15*15), "=", "3/25\n")
+
+# Parte (b)  
+cat("(b) Are events dependent? No ")
+
+```
+# Ejercicio 12
+
+If P(E∩F)=0.025
+, P(E|F)=0.05
+, and P(F|E)=0.1
+, then
+
+
+## Datos
+- P(E∩F) = 0.025
+- P(E|F) = 0.05  
+- P(F|E) = 0.1
+
+```{r}
+#| code-fold: true
+
+# Datos dados
+P_E_int_F <- 0.025
+P_E_dado_F <- 0.05
+P_F_dado_E <- 0.10
+
+# (a) P(E) = P(E∩F) / P(F|E)
+P_E <- P_E_int_F / P_F_dado_E
+
+# (b) P(F) = P(E∩F) / P(E|F)  
+P_F <- P_E_int_F / P_E_dado_F
+
+# (c) P(E∪F) = P(E) + P(F) - P(E∩F)
+P_E_union_F <- P_E + P_F - P_E_int_F
+
+# (d) ¿Son independientes? P(E∩F) == P(E) × P(F)
+son_independientes <- abs(P_E_int_F - (P_E * P_F)) < 0.0001
+
+cat("(a) P(E) =", round(P_E, 3), "\n")
+cat("(b) P(F) =", round(P_F, 3), "\n") 
+cat("(c) P(E∪F) =", round(P_E_union_F, 3), "\n")
+cat("(d) Are events E and F independent?", ifelse(son_independientes, "yes", "no"))
+```
+# Ejercicio 13
+If P(A) = 0.20, P(B) = 0.30 and P(A and B) = 0.06, then A and B are:
+
+
+```{r}
+#| code-fold: true
+
+# Primera pregunta: Tipo de eventos A y B
+P_A <- 0.20
+P_B <- 0.30
+P_A_and_B <- 0.06
+
+# Verificar independencia: P(A and B) = P(A) * P(B)
+es_independiente <- abs(P_A_and_B - (P_A * P_B)) < 0.0001
+
+cat("If P(A) = 0.20, P(B) = 0.30 and P(A and B) = 0.06, then A and B are:\n")
+cat("P(A) = 0.20, P(B) = 0.30, P(A and B) = 0.06\n")
+cat("¿Qué tipo de eventos son A y B?\n")
+cat("RESPUESTA: C. independent events\n")
+cat("RAZÓN: P(A) × P(B) = 0.20 × 0.30 = 0.06 = P(A and B)\n\n")
+
+
+cat("Two events A and B are said to be mutually exclusive if:\n")
+cat("Eventos mutuamente excluyentes se definen como:\n")
+cat("RESPUESTA: D. P(A and B) = 0\n")
+cat("RAZÓN: Eventos mutuamente excluyentes no pueden ocurrir simultáneamente")
+
+```
+# Ejercicio 14
+For two events A
+ and B
+, P(A)=0.7
+ and P(B)=0.3
+.
+
+```{r}
+#| code-fold: true
+
+# Datos
+P_A <- 0.7
+P_B <- 0.3
+
+# Parte (a): Eventos independientes
+P_A_dado_B_ind <- P_A  # Por independencia
+P_A_int_B_ind <- P_A * P_B
+P_A_union_B_ind <- P_A + P_B - P_A_int_B_ind
+
+# Parte (b): Eventos dependientes con P(A|B) = 0.8
+P_A_dado_B_dep <- 0.8
+P_A_int_B_dep <- P_A_dado_B_dep * P_B
+P_B_dado_A_dep <- P_A_int_B_dep / P_A
+
+cat("PARTE (a): If A and B are independent, then\n")
+cat(sprintf("P(A|B) = %.1f\n", P_A_dado_B_ind))
+cat(sprintf("P(A∪B) = %.2f\n", P_A_union_B_ind))
+cat(sprintf("P(A∩B) = %.2f\n\n", P_A_int_B_ind))
+
+cat("PARTE (b): If A and B are dependent and P(A|B)=0.8, then\n")
+cat(sprintf("P(B|A) = %.2f/%.2f = %.2f/%.2f\n", P_A_int_B_dep, P_A, P_A_int_B_dep*100, P_A*100))
+cat(sprintf("P(A∩B) = %.2f\n", P_A_int_B_dep))
+```
+# Ejercicio 15
+
+Two fair dice, one blue and one red, are tossed, and the up face on each die is recorded. Define the following events:
+
+E:{ The numbers are equal }
+
+F:{ The difference of the numbers is 3 or more }
+
+
+```{r}
+#| code-fold: true
+
+# Espacio muestral: 36 resultados posibles (6 × 6)
+
+# (a) P(E): Números iguales {(1,1), (2,2), ..., (6,6)}
+P_E <- 6/36
+
+# (b) P(F): Diferencia ≥ 3 
+# Pares con diferencia ≥ 3: 
+# (1,4), (1,5), (1,6), (2,5), (2,6), (3,6) y sus simétricos
+# (4,1), (5,1), (6,1), (5,2), (6,2), (6,3) → Total 12
+P_F <- 12/36
+
+# (c) P(E∩F): Números iguales Y diferencia ≥ 3
+# Los números iguales tienen diferencia 0, nunca ≥ 3
+P_E_int_F <- 0
+
+# Verificar independencia
+son_independientes <- (P_E * P_F == P_E_int_F)
+cat(sprintf("(a) P(E) = %d/%d = 1/6\n", 6, 36))
+cat(sprintf("(b) P(F) = %d/%d = 1/3\n", 12, 36))
+cat(sprintf("(c) P(E∩F) = %d\n\n", 0))
+
+cat("¿Son E y F independientes?\n")
+cat("RESPUESTA: A. no\n")
+cat("RAZÓN: P(E) × P(F) = (1/6) × (1/3) = 1/18 ≠ 0 = P(E∩F)")
+```
+# Ejercicio 16
+If P(A)=0.3
+, P(B)=0.5
+, and P(A∪B)=0.8
+, then
+
+
+```{r}
+#| code-fold: true
+
+# Datos
+P_A <- 0.3
+P_B <- 0.5
+P_A_union_B <- 0.8
+
+# Calcular P(A∩B) usando la fórmula de unión
+P_A_int_B <- P_A + P_B - P_A_union_B
+
+# (a) Verificar independencia
+independientes <- (abs(P_A_int_B - (P_A * P_B)) < 0.0001)
+
+# (b) Verificar mutua exclusividad
+mutuamente_excluyentes <- (P_A_int_B == 0)
+
+cat(sprintf("P(A∩B) = %.0f\n\n", P_A_int_B))
+
+cat("(a) ¿Son A y B independientes?\n")
+cat("RESPUESTA: NO\n")
+cat(sprintf("RAZÓN: P(A) × P(B) = %.1f ≠ %.0f = P(A∩B)\n\n", P_A * P_B, P_A_int_B))
+
+cat("(b) ¿Son A y B mutuamente excluyentes?\n")
+cat("RESPUESTA: YES\n")
+cat("RAZÓN: P(A∩B) = 0")
+```
