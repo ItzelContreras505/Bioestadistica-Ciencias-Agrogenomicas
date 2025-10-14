@@ -1,0 +1,51 @@
+---
+title: "Distribución Hipergeométrica"
+lang: es
+---
+
+```{=html}
+<style>
+main.content {
+text-align: justify}
+</style>
+```
+
+```{r}
+#| label: setup
+#| include: false
+library(tidyverse)
+library(kableExtra)
+library(gridExtra)
+
+```
+
+<br>
+
+La distribución hipergeométrica modela la probabilidad de obtener un número específico de éxitos en una muestra de tamaño nn extraída sin reemplazo de una población finita de tamaño NN que contiene exactamente K éxitos..
+
+::: {#def-vaunif}
+Una variable aleatoria discreta XX sigue una distribución hipergeométrica con parámetros NN, KK y nn si su función de masa de probabilidad está dada por:
+:::
+\begin{equation}
+P(X = k) = \frac{\left( \begin{array}{c} K \\ k \end{array} \right) \left( \begin{array}{c} N-K \\ n-k \end{array} \right)}{\left( \begin{array}{c} N \\ n \end{array} \right)}
+\end{equation}
+
+
+donde:
+
+- $N:$ Tamaño total de la población
+- $K:$ Número total de éxitos en la población
+- $n:$ Tamaño de la muestra
+- $k:$ Número de éxitos en la muestra
+
+**Parámetros y condiciones**
+
+- $0≤k≤min(n,K)$
+- $n−k≤N−K$
+- $k,n,K,N$ son enteros no negativos
+
+**Algunas de sus aplicaciones**
+
+- Control  de  calidad: De un lote de 500 productos donde se sabe que 10 son defectuosos, se toma una muestra de 40 para calcular la probabilidad de encontrar 3 o más defectuosos .
+- Juegos de cartas:Calcular la probabilidad de recibir ciertas combinaciones en juegos como el póquer, donde las cartas se reparten sin reemplazo
+- Investigación genética: Determinar la probabilidad de que un número específico de individuos herede un gen particular dentro de una población finita .
